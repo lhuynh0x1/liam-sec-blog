@@ -1,0 +1,62 @@
+[
+  {
+    "id": 6,
+    "section": "blue-team",
+    "title": "Lateral Movement: Techniques, Real-World Experience & Triage",
+    "date": "2026-05-17",
+    "tags": ["SOC", "Blue Team", "Active Directory", "Windows", "Incident Response"],
+    "excerpt": "A blue team perspective on lateral movement — techniques I've encountered in the wild, how attackers chain them, and a practical triage workflow for responding to lateral movement alerts.",
+    "difficulty": null,
+    "contentFile": "articles/blue-team/lateral-movement.html"
+  },
+  {
+    "id": 5,
+    "section": "blue-team",
+    "title": "TruffleHog: Secret Scanning & My Open-Source Detector Contributions",
+    "date": "2026-04-30",
+    "tags": ["TruffleHog", "Secrets", "Detection Engineering", "Open Source", "Blue Team"],
+    "excerpt": "An overview of TruffleHog — the industry-leading secret scanning tool — and a walkthrough of the custom detectors I contributed to the open-source project.",
+    "difficulty": null,
+    "contentFile": "articles/blue-team/trufflehog.html"
+  },
+  {
+    "id": 1,
+    "section": "blog",
+    "title": "CompTIA Security+ SY0-701: Complete Study Notes",
+    "date": "2025-03-15",
+    "tags": ["CompTIA", "Security+", "Certification", "Blue Team"],
+    "excerpt": "Comprehensive notes covering all domains of the SY0-701 exam — threats, network security, identity management, cryptography, and more.",
+    "difficulty": null,
+    "contentFile": "articles/blog/secplus.html"
+  },
+  {
+    "id": 2,
+    "section": "blog",
+    "title": "CompTIA CySA+ CS0-003: Analyst Exam Review",
+    "date": "2025-01-20",
+    "tags": ["CompTIA", "CySA+", "Certification", "SOC", "Blue Team"],
+    "excerpt": "My CySA+ exam review covering threat detection, SIEM usage, incident response, and vulnerability management from a real SOC analyst perspective.",
+    "difficulty": null,
+    "contentFile": "articles/blog/cysa.html"
+  },
+  {
+    "id": 3,
+    "section": "ctf",
+    "title": "HTB: Sea — WonderCMS RCE & Cred Reuse",
+    "date": "2025-02-10",
+    "tags": ["HackTheBox", "Linux", "Web", "CVE", "Easy"],
+    "excerpt": "Writeup for the retired HTB machine \"Sea\". Exploits CVE-2023-41425 (WonderCMS XSS-to-RCE via theme upload) then pivots through credential reuse.",
+    "difficulty": "easy",
+    "contentFile": "articles/ctf/sea.html"
+  },
+  {
+    "id": 4,
+    "section": "ctf",
+    "title": "HTB: Manager — MSSQL + ADCS ESC7",
+    "date": "2025-04-01",
+    "tags": ["HackTheBox", "Windows", "Active Directory", "ADCS", "Medium"],
+    "excerpt": "Writeup for HTB \"Manager\". Covers MSSQL filesystem enumeration via xp_dirtree, discovering web backup credentials, and exploiting ADCS ESC7 to escalate to Domain Admin.",
+    "difficulty": "medium",
+    "contentFile": "articles/ctf/manager.html"
+  }
+]

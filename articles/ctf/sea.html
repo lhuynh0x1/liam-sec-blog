@@ -1,0 +1,44 @@
+<h2>Machine Info</h2>
+<p><strong>OS:</strong> Linux &nbsp;|&nbsp; <strong>Difficulty:</strong> Easy &nbsp;|&nbsp; <strong>IP:</strong> 10.10.11.28</p>
+
+<h2>Enumeration</h2>
+<pre>nmap -sC -sV -oN nmap/initial 10.10.11.28
+
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 8.2p1 Ubuntu
+80/tcp open  http    Apache httpd 2.4.41</pre>
+
+<p>Port 80 serves a static "Sea" themed site. Add <code>sea.htb</code> to <code>/etc/hosts</code> and fuzz vhosts — nothing extra.</p>
+
+<h2>Web Enumeration</h2>
+<pre>feroxbuster -u http://sea.htb -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
+
+/data
+/themes
+/plugins
+/data/database.js</pre>
+
+<p><code>/data/database.js</code> reveals the CMS is <strong>WonderCMS</strong>. Version fingerprinting points to <strong>CVE-2023-41425</strong> — stored XSS that can be chained to upload a malicious theme and achieve RCE.</p>
+
+<h2>Initial Foothold</h2>
+<p>Using a public PoC, craft a malicious theme ZIP containing a PHP webshell. Trigger the XSS payload via the contact form, which causes the admin to fetch and install the theme. Result: reverse shell as <code>www-data</code>.</p>
+<pre>nc -lvnp 9001
+# shell received
+www-data@sea:/var/www/sea$</pre>
+
+<h2>Lateral Movement → User</h2>
+<p>Credentials are stored hashed in <code>/var/www/sea/data/database.js</code>. Crack with hashcat:</p>
+<pre>hashcat -m 3200 hash.txt /usr/share/wordlists/rockyou.txt</pre>
+<p>Reuse cracked password against local users via SSH → shell as <code>amay</code> → <code>user.txt</code>.</p>
+
+<h2>Privilege Escalation</h2>
+<pre>sudo -l
+# (root) NOPASSWD: /usr/bin/python3 /opt/monitor.sh</pre>
+<p>The monitoring script is world-writable or calls user-controlled input. Abuse to pop a root shell.</p>
+
+<h2>Key Takeaways</h2>
+<ul>
+  <li>Always check CMS version — WonderCMS had a public CVE less than a year old</li>
+  <li>Config and database files often store credentials in plain or weakly hashed form</li>
+  <li>Credential reuse (web → SSH) is among the most common lateral movement vectors</li>
+</ul>

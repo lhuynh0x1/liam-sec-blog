@@ -1,0 +1,101 @@
+<h2>What Is TruffleHog?</h2>
+<p>TruffleHog is an open-source secret scanning tool developed and maintained by <strong>Truffle Security</strong>. Its primary purpose is to find credentials, API keys, tokens, and other secrets that have been accidentally committed to source code repositories — including secrets buried deep in git history that were "deleted" years ago.</p>
+<p>Unlike naive keyword-grep approaches, TruffleHog uses a <strong>verified-detection model</strong>: each detector actively validates the credential against the target service's API before flagging it. This dramatically reduces false positives and means every result is an actionable finding.</p>
+
+<h2>How TruffleHog Works</h2>
+<h3>Scanning Modes</h3>
+<p>TruffleHog can scan a wide range of sources beyond just git repos:</p>
+<ul>
+  <li><strong>Git</strong> — full history traversal across every commit, branch, and tag</li>
+  <li><strong>GitHub / GitLab / Bitbucket</strong> — org-wide scanning via API</li>
+  <li><strong>S3 / GCS / Azure Blob</strong> — cloud storage bucket scanning</li>
+  <li><strong>Filesystem</strong> — local directory scans for CI/CD pipelines or Docker images</li>
+  <li><strong>Syslog / stdin</strong> — stream-based scanning for log pipelines</li>
+</ul>
+
+<h3>The Detector Framework</h3>
+<p>The core of TruffleHog's accuracy is its <strong>detector system</strong>. Each detector is a Go module that implements the <code>Detector</code> interface and handles a specific credential type:</p>
+<pre>type Detector interface {
+    // FromData scans raw bytes for candidate secrets
+    FromData(ctx context.Context, verify bool, data []byte) ([]Result, error)
+    // Keywords returns fast pre-filter strings to narrow scan scope
+    Keywords() []string
+}</pre>
+<p>The scan pipeline works like this:</p>
+<ol>
+  <li>A <strong>source</strong> (git, S3, etc.) chunks data into byte slices</li>
+  <li>The engine runs a keyword pre-filter — only chunks containing a detector's keywords proceed</li>
+  <li>Matching detectors run regex extraction to pull candidate credential strings</li>
+  <li>If <code>--only-verified</code> is set, each candidate is sent to the service API to confirm it is a live secret</li>
+  <li>Verified findings are reported with full context: file path, commit SHA, line number, author, date</li>
+</ol>
+
+<pre># Basic usage — scan a repo's full git history
+trufflehog git https://github.com/org/repo --only-verified
+
+# Scan a GitHub org for live secrets across all repos
+trufflehog github --org=&lt;org-name&gt; --only-verified --concurrency=4
+
+# Filesystem scan (useful in CI against checked-out code)
+trufflehog filesystem /path/to/repo --only-verified</pre>
+
+<h2>Why It Matters for Blue Teams</h2>
+<p>Exposed secrets are one of the most common and highest-impact initial access vectors in real breaches. Git repositories are particularly dangerous because <code>git rm</code> does <em>not</em> remove a file from history — a secret committed three years ago is still fully accessible to anyone who clones the repo.</p>
+<p>From a blue team perspective, TruffleHog fits into two key use cases:</p>
+<ul>
+  <li><strong>Proactive scanning</strong> — integrated into CI/CD as a pre-merge gate so secrets never reach the main branch</li>
+  <li><strong>Incident investigation</strong> — retrospective scanning of repos after a suspected leak to determine what was exposed and when</li>
+</ul>
+
+<h2>My Contributions to TruffleHog</h2>
+<p>TruffleHog is fully open source under the AGPL-3.0 license and welcomes community detector contributions. Adding a detector for a new service follows a standardized pattern, making it approachable even if you're not a Go expert.</p>
+
+<h3>Detector Contribution: [Service Name]</h3>
+<p><em>// Fill in: which service/API key type you wrote the detector for</em></p>
+<p>The detector targets <strong>[Service Name]</strong> API tokens, which follow the pattern <code>[regex pattern]</code>. These tokens grant access to <strong>[describe what access the token provides]</strong>, making leaked tokens a high-severity finding.</p>
+<pre>// Keywords tell TruffleHog's pre-filter which chunks are worth scanning
+func (s Scanner) Keywords() []string {
+    return []string{"[service-name]", "[token-prefix]"}
+}
+
+// FromData extracts candidates and optionally verifies them
+func (s Scanner) FromData(ctx context.Context, verify bool, data []byte) ([]detectors.Result, error) {
+    matches := keyPattern.FindAllSubmatch(data, -1)
+    for _, match := range matches {
+        s1 := detectors.Result{
+            DetectorType: detectorspb.DetectorType_[ServiceName],
+            Raw:          match[1],
+        }
+        if verify {
+            // Hit the service's /me or token-info endpoint
+            // Set s1.Verified = true on 200, handle 401/403 as invalid
+        }
+        results = append(results, s1)
+    }
+    return results, nil
+}</pre>
+
+<h3>What Makes a Good Detector</h3>
+<p>Through the contribution process I learned what the TruffleHog maintainers look for in a quality detector:</p>
+<ul>
+  <li><strong>Tight regex</strong> — overly broad patterns cause too many false-positive candidates that slow down scanning</li>
+  <li><strong>Minimal keyword set</strong> — keywords are substring-matched against every chunk; keep them specific to reduce pre-filter noise</li>
+  <li><strong>Reliable verification endpoint</strong> — use a read-only API endpoint that confirms token validity without side effects (no POST/DELETE calls)</li>
+  <li><strong>Graceful error handling</strong> — network timeouts and rate limits should not crash the scan; log and continue</li>
+  <li><strong>Test coverage</strong> — the project requires unit tests with both valid and invalid credential fixtures</li>
+</ul>
+
+<h2>Running TruffleHog in a SOC Context</h2>
+<p>For ongoing secret hygiene, I run TruffleHog on a schedule against internal repositories and pipe results into our SIEM via structured JSON output:</p>
+<pre># Output as JSON for SIEM ingestion
+trufflehog git https://github.com/org/repo --only-verified --json \
+  | jq -c '.' &gt;&gt; /var/log/trufflehog/findings.json</pre>
+<p>Alert rules in Splunk watch for new lines in that log source and page on-call if a verified secret is found. From there, the IR playbook kicks in: revoke the credential, audit its usage in cloud provider logs, and determine blast radius before the service owner is notified.</p>
+
+<h2>Key Takeaways</h2>
+<ul>
+  <li>TruffleHog's verified-only mode means every alert is a real finding — almost zero alert fatigue</li>
+  <li>Git history is permanent; assume anything ever committed is potentially exposed</li>
+  <li>Contributing a detector is a great low-barrier way to contribute to an actively maintained security project</li>
+  <li>Pair TruffleHog with pre-commit hooks (e.g., <code>pre-commit</code> + TruffleHog) to catch secrets before they ever leave the developer's machine</li>
+</ul>
