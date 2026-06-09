@@ -808,6 +808,7 @@ mark {
   width: 96px;
   height: 96px;
   object-fit: contain;
+  transition: filter 0.2s;
 }
 
 .cert-card-placeholder {
@@ -843,6 +844,9 @@ mark {
   box-shadow: 0 4px 16px rgba(248, 81, 73, 0.1);
 }
 .cert-card.offensive:hover .cert-card-name { color: var(--accent-red); }
+.cert-card.offensive:hover .cert-card-logo img {
+  filter: drop-shadow(0 0 8px rgba(248, 81, 73, 1)) drop-shadow(0 0 20px rgba(248, 81, 73, 0.8));
+}
 
 .cert-card.blue-team:hover {
   border-color: var(--border-accent);
