@@ -232,6 +232,46 @@ function closeModal() {
   document.body.style.overflow = '';
 }
 
+// ===== CERT MODAL =====
+function openCertModal(card) {
+  const name    = card.dataset.name;
+  const issuer  = card.dataset.issuer;
+  const badge   = card.dataset.badge;
+  const cert    = card.dataset.cert;
+  const isOff   = card.classList.contains('offensive');
+
+  const modal = document.getElementById('article-modal');
+  document.getElementById('modal-title').textContent      = name;
+  document.getElementById('modal-date').textContent       = `// ${issuer}`;
+  document.getElementById('modal-section').textContent    = '~/certifications';
+  document.getElementById('modal-difficulty').textContent = '';
+  document.getElementById('modal-tags').innerHTML =
+    `<span class="ctag ${isOff ? 'ctag-red' : 'ctag-blue'}">${isOff ? 'offensive' : 'blue-team'}</span>`;
+
+  const body = document.getElementById('modal-body');
+  let content = '';
+
+  if (badge) {
+    content += `<div style="text-align:center;margin-bottom:1.75rem;">
+      <img src="${badge}" alt="${name} badge" style="max-width:260px;width:100%;">
+    </div>`;
+  }
+
+  if (cert) {
+    content += `<div style="text-align:center;">
+      <img src="${cert}" alt="${name} certificate" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+    </div>`;
+  }
+
+  if (!badge && !cert) {
+    content = `<p style="text-align:center;padding:3rem 0;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:0.85rem;">// certificate coming soon</p>`;
+  }
+
+  body.innerHTML = content;
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
 // ===== SEARCH =====
 function initSearch() {
   const input   = document.getElementById('search-input');
@@ -456,6 +496,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // hero cards
   document.querySelectorAll('.hero-card[data-nav]').forEach(card =>
     card.addEventListener('click', () => goTo(card.dataset.nav))
+  );
+
+  // cert cards
+  document.querySelectorAll('.cert-card').forEach(card =>
+    card.addEventListener('click', () => openCertModal(card))
   );
 
   // modal

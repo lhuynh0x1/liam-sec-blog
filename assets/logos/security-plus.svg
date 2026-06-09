@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <rect width="120" height="120" rx="12" fill="#161b22"/>
+  <rect width="120" height="120" rx="12" fill="none" stroke="#58a6ff" stroke-width="1.5" opacity="0.45"/>
+  <rect width="120" height="3" rx="1.5" fill="#58a6ff"/>
+  <path d="M60 24 L71 29.5 L71 40 Q71 48.5 60 53.5 Q49 48.5 49 40 L49 29.5 Z" fill="none" stroke="#58a6ff" stroke-width="1.5" opacity="0.65"/>
+  <polyline points="55,38 58.5,42 66,34" fill="none" stroke="#58a6ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.65"/>
+  <text x="60" y="76" font-family="ui-monospace,'Courier New',monospace" font-size="19" font-weight="700" fill="#58a6ff" text-anchor="middle" dominant-baseline="middle">Security</text>
+  <text x="60" y="97" font-family="ui-monospace,'Courier New',monospace" font-size="24" font-weight="700" fill="#58a6ff" text-anchor="middle" dominant-baseline="middle">+</text>
+</svg>

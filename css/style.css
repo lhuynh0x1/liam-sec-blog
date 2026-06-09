@@ -761,7 +761,105 @@ mark {
   border-color: rgba(9, 105, 218, 0.2);
 }
 
+/* ===== CERTIFICATIONS ===== */
+.cert-group { margin-bottom: 2.5rem; }
+
+.cert-group-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  letter-spacing: 0.04em;
+}
+
+.cert-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.cert-card {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 200px;
+}
+
+.cert-card-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.cert-card-logo img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.cert-card-placeholder {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.cert-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.cert-card-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  transition: color 0.2s;
+}
+
+.cert-card-issuer {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.cert-card.offensive:hover {
+  border-color: rgba(248, 81, 73, 0.45);
+  background: rgba(248, 81, 73, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(248, 81, 73, 0.1);
+}
+.cert-card.offensive:hover .cert-card-name { color: var(--accent-red); }
+.cert-card.offensive:hover .cert-card-logo { border-color: rgba(248, 81, 73, 0.35); }
+
+.cert-card.blue-team:hover {
+  border-color: var(--border-accent);
+  background: rgba(88, 166, 255, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(88, 166, 255, 0.1);
+}
+.cert-card.blue-team:hover .cert-card-name { color: var(--accent); }
+.cert-card.blue-team:hover .cert-card-logo { border-color: rgba(88, 166, 255, 0.35); }
+
 /* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .cert-columns { grid-template-columns: 1fr; gap: 2.5rem; }
+  .cert-name { font-size: 1.6rem; }
+}
+
 @media (max-width: 780px) {
   .main-nav { display: none; }
   .search-container { display: none; }
