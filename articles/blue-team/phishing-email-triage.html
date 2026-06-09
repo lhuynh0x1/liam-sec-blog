@@ -1,0 +1,91 @@
+<h2>Overview</h2>
+<p>Triaging phishing emails is likely one of the first things you'll be doing as a new analyst on the team. In this post, I'll be sharing the tips, tricks, and tools I used when I was actively working the email queue — this is my personal workflow, so take it with a few caveats. Not every organization is the same, and how deep you need to investigate will depend on your team's scope and processes. That said, this is my full workflow for email triage.</p>
+
+<p>I won't be covering the different types of phishing emails here — I'm assuming that at this stage you're already familiar with the basics of how email works and the common phishing categories. Some of the tools I mention are also based on my personal experience, and a few of them aren't free, so keep that in mind!</p>
+
+<h2>Tools</h2>
+<ul>
+  <li><strong><a href="https://gchq.github.io/CyberChef/" target="_blank" rel="noopener noreferrer">CyberChef</a></strong> – Used for decoding URLs and analyzing attachment obfuscation. A wonderful toolkit that's absolutely worth learning how to use!</li>
+  <li><strong><a href="https://sitereview.bluecoat.com/" target="_blank" rel="noopener noreferrer">Symantec SiteReview</a> / <a href="https://zulu.zscaler.com/" target="_blank" rel="noopener noreferrer">Zscaler Site Review</a></strong> – Dead giveaway naming aside, these tools let you scan a site and see how others have reported or categorized a domain. Great for quick reputation checks.</li>
+  <li><strong><a href="https://www.whois.com/whois/" target="_blank" rel="noopener noreferrer">whois.com</a></strong> – Used for domain age checks. A newly registered domain is always a red flag.</li>
+  <li><strong><a href="https://www.vmray.com/" target="_blank" rel="noopener noreferrer">VMRay</a> / <a href="https://urlscan.io/" target="_blank" rel="noopener noreferrer">URLScan</a></strong> – Sandboxes used for URL scanning, interaction, and attachment analysis. These are not free tools, but URLScan's basic tier is decent enough for getting started and building experience.</li>
+  <li><strong><a href="https://mha.azurewebsites.net/" target="_blank" rel="noopener noreferrer">Message Header Analyzer</a></strong> – Used for email header analysis.</li>
+  <li><strong><a href="https://notepad-plus-plus.org/" target="_blank" rel="noopener noreferrer">Notepad++</a></strong> – A solid text editor with built-in Base64 encoding and decoding functionality. Useful for attachment analysis when you need to inspect content manually.</li>
+  <li><strong><a href="https://www.virustotal.com/" target="_blank" rel="noopener noreferrer">VirusTotal</a></strong> – Used for hash and URL checks on attachments, as well as URL scanning. A go-to for quick reputation lookups.</li>
+  <li><strong><a href="https://www.google.com/" target="_blank" rel="noopener noreferrer">Google</a> and AI</strong> – Never underestimate these. A quick search on a suspicious domain, phrase, or file name can surface threat intel reports, community findings, or prior victim reports that save you a lot of time.</li>
+</ul>
+
+<h2>Workflow Overview</h2>
+<p>Before we get into the details, here's a high-level look at the workflow we'll be walking through. Not every email will require you to go through every single step — some are obvious enough to call at the preview stage — but this is the full process from start to finish:</p>
+<ol>
+  <li><strong>Email Preview</strong> – Quick visual triage of the email itself. Sender, recipients, subject, body, links, attachments, and any urgency cues.</li>
+  <li><strong>Header Analysis</strong> – Dig into the email header when spoofing is suspected. Check Return-Path, Authentication-Results, and DKIM/DMARC/SPF values.</li>
+  <li><strong>Attachment &amp; URL Analysis</strong> – Decode and analyze any attachments or URLs. Extract obfuscated content, follow redirect chains, and sandbox suspicious URLs.</li>
+  <li><strong>Outcome &amp; Next Steps</strong> – Document your findings, correlate against proxy logs, block the domain, and take any necessary containment actions.</li>
+</ol>
+<p>Think of this as a funnel — you're trying to confirm or rule out phishing as efficiently as possible at each stage before moving to the next one. The further you go, the more technical the analysis gets.</p>
+
+<h2>Email Preview</h2>
+<p>As analysts, we should always try to do some basic triage before going full hunt mode — keep your sanity intact because alert fatigue is real, and this step alone will save you a lot of energy. Just by looking at the email, you can get a pretty solid read on whether something is phishing or not the majority of the time. Here are the indicators you should be looking at:</p>
+
+<h3>Sender, Recipient, and Email Subject</h3>
+<p>Who is sending the email, who are the recipients, and what is the subject line? A mismatch between the display name and the actual sending address is an immediate red flag. Also pay attention to whether internal employees are being targeted, or if it's a broad blast to multiple recipients — that context matters when escalating.</p>
+
+<h3>Email Body and Context</h3>
+<p>Always try to understand what the email is actually about, because as phishing techniques get more sophisticated, context becomes critical. I've worked with a responder before who unraveled a sophisticated phishing chain that started off looking like a completely normal business conversation before revealing itself as a social engineering attempt that led a user to download a malicious Excel file. Don't dismiss an email just because it reads naturally at first glance.</p>
+
+<h3>Font, Grammar, and Images</h3>
+<p>These are often the easiest giveaways. Watch for inconsistent fonts or font sizes within the email body, poor grammar or awkward phrasing, pixelated or stretched company logos, and images that look out of place or disproportionate compared to what a legitimate email from that sender would look like. Legitimate organizations generally have consistent, polished branding.</p>
+
+<h3>Links and URLs</h3>
+<p>Even before diving into sandboxes or scanners, hover over any hyperlinks in the email and look at where they actually point. A link that displays as "Click here to verify your account" but points to a random domain is an immediate indicator. Look for typosquatting, lookalike domains, or URL shorteners being used to mask the real destination.</p>
+
+<h3>Attachments</h3>
+<p>This becomes more important when you're already seeing red flags from the steps above. What file is being attached? What is the file name — is it trying to look legitimate? What is the file type? Certain file types like <code>.exe</code>, <code>.js</code>, <code>.vbs</code>, <code>.lnk</code>, and password-protected archives are higher risk. If you have access to VirusTotal, you can grab the file hash and run a quick check before ever opening anything.</p>
+
+<h3>Sense of Urgency or Pressure</h3>
+<p>Phishing emails commonly use urgency as a manipulation tactic — things like "Your account will be suspended in 24 hours," "Immediate action required," or "Verify now to avoid penalties." This is a social engineering staple and worth flagging even if nothing else looks obviously wrong.</p>
+
+<h2>Header Analysis</h2>
+<p>If you suspect an email is spoofed, the email header is where you want to look next. Understanding how email headers work and what they contain is important, but I won't be covering that in depth here. I'd recommend using an email header analyzer to make things easier to read — like the Message Header Analyzer tool I mentioned in the tooling section. Here are some of the things I look at when investigating an email header:</p>
+<ul>
+  <li><strong>Return-Path</strong> – This is where the email is expected to return if the recipient responds. The sender address and the return-path address can be different, which is a red flag worth noting.</li>
+  <li><strong>Authentication-Results / Authentication-Results-Original</strong> – This shows where the email originated from. At my company, I always look at the <code>Authentication-Results-Original</code> rather than <code>Authentication-Results</code> because of how our email flow is set up — emails first pass through FireEye for scanning before reaching us, which causes the standard <code>Authentication-Results</code> value to reflect FireEye rather than the original sender. That said, this is specific to my environment, so your setup may be different. It's worth taking the time to understand how your organization's email pipeline is configured as you get into email triage.</li>
+  <li><strong>DKIM, DMARC, and SPF</strong> – These values verify the authenticity of the email. If any of them fail, there's a good chance the email is spoofed.</li>
+</ul>
+
+<h2>Attachment &amp; URL Analysis</h2>
+<p>Since my company uses Microsoft Defender EDR, when working with suspected malicious attachments I download and store them in a folder that has an explicit Defender exclusion configured — this prevents Defender from quarantining or removing the file before I can analyze it.</p>
+<p>For analysis, the most common malicious attachments I come across are HTML and HTM files, which are typically used for URL redirection. Occasionally you'll also see PDFs and Word documents used for the same purpose, and Excel files being used for malicious macro execution or embedded malicious QR codes. My go-to tool for attachment analysis is Notepad++ because the most common obfuscation technique I see in these files is Base64 encoding. If you're going to use Notepad++ for this, there are two settings I'd recommend configuring right away:</p>
+<ul>
+  <li><strong>Word Wrap</strong> – Extremely useful when dealing with large obfuscated files that contain null bytes or long random strings designed to make the actual payload harder to spot. Enabling word wrap lets you actually read the content without horizontal scrolling forever.</li>
+  <li><strong>Disable Hyperlinks</strong> – Prevents you from accidentally clicking a malicious URL embedded in the file while you're analyzing it.</li>
+</ul>
+<p>If the email doesn't have a traditional attachment but instead contains an image with a QR code, I'd recommend taking a clean screenshot of the QR code and then using CyberChef's <strong>Parse QR Code</strong> function to extract the URL. From there you can also run it through URL decoding to make it more readable and decode any encoded recipient email values that may be embedded in the URL. Some of the CyberChef operations I regularly use during attachment and URL analysis are:</p>
+<ul>
+  <li>Remove Null Bytes</li>
+  <li>From Base64</li>
+  <li>URL Decode</li>
+  <li>Parse QR Code</li>
+</ul>
+<p>Once you've decoded and extracted the URL, the next step is scanning it through whatever sandbox you have available to see where the domain leads. One important thing to keep in mind before submitting — <strong>strip out any recipient email address from the URL before scanning</strong>. When a sandbox makes a request to a malicious site, it's sending an actual HTTP request, which means any email address embedded in that URL gets transmitted to the threat actor's server. This gives them a live, confirmed email address tied to your company's domain, which they can use in future phishing campaigns. I usually replace the real email value with a dummy address before scanning. The recipient email is typically appended right after the main phishing URL as a parameter.</p>
+<p>Something else worth noting — phishing sites today are commonly sitting behind reverse proxies like Cloudflare, which masks the true origin server. If you want to identify the actual destination domain, you need to walk the full redirect chain rather than just checking the initial URL. This is where a proper sandbox tool like VMRay or URLScan Pro becomes valuable. By submitting a fake credential to the phishing login page, you can capture any <strong>POST requests</strong> and see exactly where those credentials are being sent — that destination is your true effective domain, and the one you want to be documenting and escalating.</p>
+
+<h2>Outcome and Next Steps</h2>
+<p>At this point, you should have enough evidence to wrap up your case. Depending on your team's scope and procedures, documenting your findings and closing out the ticket may be all that's required — but at my current SOC, we go a bit deeper.</p>
+<p>Documentation practices also vary from company to company, but the core idea is the same — you want enough on record to clearly establish that the email is phishing, what the effective URL or payload was, and how you arrived at that conclusion. This matters not just for closure, but also in the event your SOC is required for an audit. A well-documented case means anyone who picks it up later can quickly understand what happened and what the analyst did without having to start from scratch. Get into the habit of taking notes and screenshots as you work through your triage steps — don't wait until the end to document, because you will miss details.</p>
+<p>After documenting, we correlate the effective phishing domain against our proxy logs to look for any indicators of successful connections to those sites within the environment. This helps us determine whether any recipients actually clicked the URL or interacted with the attachment. If we find evidence of interaction, we take precautionary steps such as having the affected recipients reset their passwords and flagging those accounts for any suspicious activity.</p>
+<p>We also implement domain blocking through our proxy to ensure the site is blocked company-wide — that way, even if someone opens the attachment later, the connection gets cut at the network level. If the phishing campaign is part of a larger wave targeting multiple users, we can also initiate an <strong>email purge</strong> to have the malicious emails removed directly from affected inboxes, reducing the chance of anyone interacting with them.</p>
+<p>As a reminder, every environment is different. Your SOC may stop at documentation and escalation, or your team may have a different containment toolset entirely. The key takeaway is understanding the full picture of what's possible so you can adapt the workflow to wherever you land.</p>
+
+<h2>Edge Cases</h2>
+<p>As phishing emails grow more sophisticated — both in quality and volume — largely due to threat actors leveraging AI to craft convincing landing pages and sharper social engineering techniques, we're starting to see scenarios that don't fit the usual playbook.</p>
+
+<h3>Legitimate Domains Used as a Redirect</h3>
+<p>One scenario I run into fairly often is emails where the initial URL points to a real, legitimate domain before silently redirecting to the actual malicious site. At first glance the link looks clean, and that's exactly the point. This is where having solid tooling like VMRay and URLScan becomes invaluable — they let you follow the full redirect chain and surface that final malicious URL so you can take action, whether that's domain blocking or escalating the finding.</p>
+
+<h3>Cloud File Sharing (Dropbox, Adobe, etc.)</h3>
+<p>Another frustrating scenario is emails that deliver their payload through cloud file-sharing platforms like Dropbox. Because of the nature of these platforms, you can't easily dig into what's actually being shared without clicking through yourself — and it often requires an account just to view the shared file — which is obviously not an option. This is one of those cases where our options as analysts are limited. User education is the most reliable move, but don't overlook checking past email history between the sender and recipient. A first-time sender with no prior exchanges is a meaningful red flag, while previous correspondence can help rule out the more obvious red flags and point toward legitimate activity.</p>
+
+<h3>Encrypted Attachments</h3>
+<p>The last edge case on my list is encrypted attachments. Password-protected files are a classic evasion technique because they bypass automated scanning and sandboxing entirely. In practice, the best path forward is checking for prior communication between the sender and recipient to see whether there's a legitimate reason for that kind of file to be sent. Ultimately though, this one comes down to the user — if they weren't expecting anything from that sender, that's a strong enough red flag to escalate.</p>
