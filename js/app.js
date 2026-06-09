@@ -24,7 +24,6 @@ function tagClass(tag) { return TAG_COLORS[tag] || ''; }
 const state = {
   section: 'home',
   activeTag: null,
-  theme: localStorage.getItem('sec-theme') || 'dark',
 };
 
 // ===== HELPERS =====
@@ -39,16 +38,6 @@ function highlight(text, q) {
   return text.replace(new RegExp(`(${escRx(q)})`, 'gi'), '<mark>$1</mark>');
 }
 
-// ===== THEME =====
-function applyTheme() {
-  document.documentElement.setAttribute('data-theme', state.theme);
-}
-
-function toggleTheme() {
-  state.theme = state.theme === 'dark' ? 'light' : 'dark';
-  applyTheme();
-  localStorage.setItem('sec-theme', state.theme);
-}
 
 // ===== DATA LOADING =====
 async function loadArticles() {
@@ -312,82 +301,146 @@ function showSearch(q) {
   overlay.classList.remove('hidden');
 }
 
-// ===== CANVAS PARTICLE NETWORK =====
+// ===== CANVAS ANIMATION (starry night) =====
 function initCanvas() {
   const canvas = document.getElementById('bg-canvas');
   const ctx    = canvas.getContext('2d');
-  let particles = [];
+  let stars = [], shootingStars = [];
+  let lastShoot = 0;
 
   function resize() {
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
+    buildStars();
   }
 
-  class Particle {
+  // --- Twinkling stars ---
+  class Star {
     constructor() { this.reset(true); }
     reset(init) {
-      this.x  = Math.random() * canvas.width;
-      this.y  = init ? Math.random() * canvas.height : -10;
-      this.vx = (Math.random() - 0.5) * 0.35;
-      this.vy = (Math.random() - 0.5) * 0.35;
-      this.r  = Math.random() * 2.5 + 1.2;
+      this.x          = Math.random() * canvas.width;
+      this.y          = init ? Math.random() * canvas.height : Math.random() * canvas.height;
+      this.r          = Math.random() * 1.5 + 0.4;
+      this.bright     = this.r > 1.4;           // large stars get a cross flare
+      this.alpha      = Math.random() * 0.5 + 0.2;
+      this.twinkleSpd = Math.random() * 0.012 + 0.003;
+      this.twinkleDir = Math.random() > 0.5 ? 1 : -1;
+      this.peakAlpha  = Math.random() * 0.4 + 0.6; // max brightness 0.6–1.0
+      this.baseAlpha  = Math.random() * 0.1 + 0.08; // min brightness
     }
     step() {
-      this.x += this.vx; this.y += this.vy;
-      if (this.x < 0 || this.x > canvas.width)  this.vx *= -1;
-      if (this.y < 0 || this.y > canvas.height)  this.vy *= -1;
+      this.alpha += this.twinkleSpd * this.twinkleDir;
+      if (this.alpha >= this.peakAlpha) { this.alpha = this.peakAlpha; this.twinkleDir = -1; }
+      if (this.alpha <= this.baseAlpha) { this.alpha = this.baseAlpha; this.twinkleDir =  1; }
     }
     draw() {
-      const light = document.documentElement.getAttribute('data-theme') === 'light';
+      ctx.save();
+      ctx.globalAlpha = this.alpha;
+
+      // Soft glow halo
+      ctx.shadowColor = 'rgba(200,220,255,0.9)';
+      ctx.shadowBlur  = this.r * 7;
+      ctx.fillStyle   = 'rgba(255,255,245,1)';
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-      ctx.fillStyle = light ? 'rgba(9,105,218,0.75)' : 'rgba(220,50,50,0.75)';
       ctx.fill();
-    }
-  }
 
-  function build() {
-    particles = [];
-    const n = Math.min(Math.floor(canvas.width * canvas.height / 14000), 90);
-    for (let i = 0; i < n; i++) particles.push(new Particle());
-  }
-
-  function lines() {
-    const light = document.documentElement.getAttribute('data-theme') === 'light';
-    const base  = light ? 'rgba(9,105,218,' : 'rgba(220,50,50,';
-    const max   = 130;
-    for (let i = 0; i < particles.length; i++) {
-      for (let j = i + 1; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const d  = Math.sqrt(dx * dx + dy * dy);
-        if (d < max) {
-          const a = (1 - d / max) * 0.35;
+      // Cross flare on brighter stars
+      if (this.bright && this.alpha > 0.55) {
+        ctx.shadowBlur  = 0;
+        ctx.globalAlpha = this.alpha * 0.35;
+        ctx.strokeStyle = 'rgba(200,220,255,1)';
+        ctx.lineWidth   = 0.6;
+        for (let i = 0; i < 4; i++) {
+          const a = i * Math.PI / 2;
           ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.strokeStyle = base + a + ')';
-          ctx.lineWidth = 0.8;
+          ctx.moveTo(this.x, this.y);
+          ctx.lineTo(this.x + Math.cos(a) * this.r * 7, this.y + Math.sin(a) * this.r * 7);
           ctx.stroke();
         }
       }
+
+      ctx.restore();
     }
   }
 
-  function tick() {
+  // --- Shooting stars ---
+  class ShootingStar {
+    constructor() { this.reset(); }
+    reset() {
+      const angle = (Math.random() * 25 + 20) * Math.PI / 180;
+      const speed = Math.random() * 5 + 4;
+      this.x      = Math.random() * canvas.width;
+      this.y      = Math.random() * canvas.height * 0.5;
+      this.vx     = Math.cos(angle) * speed;
+      this.vy     = Math.sin(angle) * speed;
+      this.r      = Math.random() * 1.2 + 0.8;
+      this.trail  = [];
+      this.maxLen = Math.floor(Math.random() * 35 + 40);
+      this.active = true;
+    }
+    step() {
+      this.trail.push({ x: this.x, y: this.y });
+      if (this.trail.length > this.maxLen) this.trail.shift();
+      this.x += this.vx;
+      this.y += this.vy;
+      if (this.x > canvas.width + 60 || this.y > canvas.height + 60) this.active = false;
+    }
+    draw() {
+      if (this.trail.length < 2) return;
+      ctx.save();
+      for (let i = 1; i < this.trail.length; i++) {
+        const t = i / this.trail.length;
+        ctx.beginPath();
+        ctx.moveTo(this.trail[i - 1].x, this.trail[i - 1].y);
+        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+        ctx.strokeStyle = `rgba(200,220,255,${t * 0.8})`;
+        ctx.lineWidth   = this.r * t;
+        ctx.shadowColor = 'rgba(180,210,255,0.8)';
+        ctx.shadowBlur  = 6;
+        ctx.stroke();
+      }
+      // Head
+      ctx.shadowBlur  = 12;
+      ctx.shadowColor = 'rgba(200,230,255,1)';
+      ctx.fillStyle   = 'rgba(255,255,255,1)';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function buildStars() {
+    const n = Math.min(Math.floor(canvas.width * canvas.height / 5500), 220);
+    stars = Array.from({ length: n }, () => new Star());
+    shootingStars = [];
+  }
+
+  function tick(ts) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => { p.step(); p.draw(); });
-    lines();
+
+    // Shoot every 0.6–1.6s, 1–2 at a time
+    if (ts - lastShoot > 600 + Math.random() * 1000) {
+      shootingStars.push(new ShootingStar());
+      if (Math.random() > 0.5) shootingStars.push(new ShootingStar());
+      lastShoot = ts;
+    }
+
+    stars.forEach(s => { s.step(); s.draw(); });
+    shootingStars = shootingStars.filter(s => s.active);
+    shootingStars.forEach(s => { s.step(); s.draw(); });
+
     requestAnimationFrame(tick);
   }
 
-  resize(); build(); tick();
-  window.addEventListener('resize', () => { resize(); build(); });
+  resize();
+  requestAnimationFrame(tick);
+  window.addEventListener('resize', resize);
 }
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', async () => {
-  applyTheme();
   initCanvas();
   initSearch();
   initMobileMenu();
@@ -399,9 +452,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // logo
   document.getElementById('logo-home').addEventListener('click', () => goTo('home'));
-
-  // theme toggle
-  document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
   // hero cards
   document.querySelectorAll('.hero-card[data-nav]').forEach(card =>
