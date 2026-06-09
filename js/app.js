@@ -251,19 +251,11 @@ function openCertModal(card) {
   const body = document.getElementById('modal-body');
   let content = '';
 
-  if (badge) {
-    content += `<div style="text-align:center;margin-bottom:1.75rem;">
-      <img src="${badge}" alt="${name} badge" style="max-width:260px;width:100%;">
-    </div>`;
-  }
-
   if (cert) {
-    content += `<div style="text-align:center;">
-      <img src="${cert}" alt="${name} certificate" style="width:100%;border-radius:8px;border:1px solid var(--border);">
+    content = `<div style="text-align:center;">
+      <img src="${cert}" alt="${name} certificate" style="width:100%;border-radius:8px;">
     </div>`;
-  }
-
-  if (!badge && !cert) {
+  } else {
     content = `<p style="text-align:center;padding:3rem 0;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:0.85rem;">// certificate coming soon</p>`;
   }
 

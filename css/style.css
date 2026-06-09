@@ -781,22 +781,22 @@ mark {
 .cert-card {
   display: flex;
   align-items: center;
-  gap: 1.2rem;
+  gap: 1.4rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1.1rem 1.5rem;
+  border-radius: 14px;
+  padding: 1.4rem 1.8rem;
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 230px;
+  min-width: 260px;
 }
 
 .cert-card-logo {
-  width: 72px;
-  height: 72px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg-secondary);
+  width: 96px;
+  height: 96px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -805,14 +805,14 @@ mark {
 }
 
 .cert-card-logo img {
-  width: 72px;
-  height: 72px;
+  width: 96px;
+  height: 96px;
   object-fit: contain;
 }
 
 .cert-card-placeholder {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text-muted);
 }
@@ -820,19 +820,19 @@ mark {
 .cert-card-info {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
 }
 
 .cert-card-name {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--text-primary);
   transition: color 0.2s;
 }
 
 .cert-card-issuer {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   color: var(--text-muted);
 }
 
@@ -843,7 +843,6 @@ mark {
   box-shadow: 0 4px 16px rgba(248, 81, 73, 0.1);
 }
 .cert-card.offensive:hover .cert-card-name { color: var(--accent-red); }
-.cert-card.offensive:hover .cert-card-logo { border-color: rgba(248, 81, 73, 0.35); }
 
 .cert-card.blue-team:hover {
   border-color: var(--border-accent);
@@ -852,7 +851,6 @@ mark {
   box-shadow: 0 4px 16px rgba(88, 166, 255, 0.1);
 }
 .cert-card.blue-team:hover .cert-card-name { color: var(--accent); }
-.cert-card.blue-team:hover .cert-card-logo { border-color: rgba(88, 166, 255, 0.35); }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
