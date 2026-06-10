@@ -854,6 +854,9 @@ mark {
   box-shadow: 0 4px 16px rgba(88, 166, 255, 0.1);
 }
 .cert-card.blue-team:hover .cert-card-name { color: var(--accent); }
+.cert-card.blue-team:hover .cert-card-logo img {
+  filter: drop-shadow(0 0 8px rgba(88, 166, 255, 1)) drop-shadow(0 0 20px rgba(88, 166, 255, 0.8));
+}
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
