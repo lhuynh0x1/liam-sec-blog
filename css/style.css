@@ -788,7 +788,8 @@ mark {
   padding: 1.4rem 1.8rem;
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 260px;
+  width: 260px;
+  flex: 0 0 260px;
 }
 
 .cert-card-logo {
