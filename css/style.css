@@ -855,7 +855,7 @@ mark {
 }
 .cert-card.blue-team:hover .cert-card-name { color: var(--accent); }
 .cert-card.blue-team:hover .cert-card-logo img {
-  filter: drop-shadow(0 0 8px rgba(88, 166, 255, 1)) drop-shadow(0 0 20px rgba(88, 166, 255, 0.8));
+  filter: drop-shadow(0 0 6px rgba(88, 166, 255, 1)) drop-shadow(0 0 16px rgba(88, 166, 255, 1)) drop-shadow(0 0 30px rgba(88, 166, 255, 0.7));
 }
 
 /* ===== RESPONSIVE ===== */
